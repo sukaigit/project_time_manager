@@ -1,0 +1,108 @@
+# 品味不变式 — 编码风格与架构约束
+#
+# tech_stack: auto（自动检测）或指定 java/python/javascript/go
+# auto 检测逻辑：扫 src/ 下文件后缀，取出现最多的栈
+# 安全红线、风格阈值跨栈通用
+# ============================================
+
+tech_stack: auto
+
+# --- 命名规范（跨栈，检查脚本按检测到的栈执行对应规则） ---
+naming:
+  java:
+    class: UpperCamelCase
+    method: lowerCamelCase
+    constant: UPPER_SNAKE_CASE
+    sql_table: lower_snake_case
+    sql_column: lower_snake_case
+    rest_endpoint: kebab-case
+  python:
+    class: UpperCamelCase
+    function: lower_snake_case
+    variable: lower_snake_case
+    constant: UPPER_SNAKE_CASE
+    sql_table: lower_snake_case
+    sql_column: lower_snake_case
+    rest_endpoint: kebab-case
+  javascript:
+    class: UpperCamelCase
+    function: lowerCamelCase
+    variable: lowerCamelCase   # const/let
+    constant: UPPER_SNAKE_CASE
+    sql_table: lower_snake_case
+    sql_column: lower_snake_case
+    rest_endpoint: kebab-case
+  go:
+    exported: UpperCamelCase    # 大写开头=公开
+    internal: lowerCamelCase    # 小写开头=私有
+    constant: UPPER_SNAKE_CASE
+    sql_table: lower_snake_case
+    sql_column: lower_snake_case
+    rest_endpoint: kebab-case
+
+# --- 架构红线（分层违规直接阻断） ---
+architecture:
+  # 默认分层（不限于一个栈的项目只检测找到的栈对应的层）
+  layers:
+    java: [types, config, repo, service, controller, ui]
+    python: [models, routes, services, templates, utils]
+    javascript: [routes, middleware, services, components, utils]
+    go: [handlers, services, repositories, models, web]
+
+  # 禁止的跨层依赖（检查逻辑实现在 scripts/taste-check.sh 中）
+  forbidden_crossing:
+    java:
+      - from: controller  to: repo
+      - from: service     to: ui
+    python:
+      - from: routes      to: models       # 路由直接操作DB
+      - from: templates   to: models       # 模板直接查DB
+    javascript:
+      - from: components  to: routes       # 组件直接调用API（应通过中间件层）
+    go:
+      - from: handlers     to: repositories  # handler 应通过 services 访问数据
+      - from: handlers     to: models         # handler 不应直接操作模型
+
+  # 禁止代码模式（按栈）
+  forbidden_patterns:
+    java:
+      - pattern: 'new \w+\(\)' in service layer    # 必须用 DI
+        reason: "Service 层必须通过依赖注入获取 Bean"
+      - pattern: 'System\.out\.println'
+        reason: "必须用 Logger"
+      - pattern: 'catch\s*\([^)]*\)\s*\{\s*\}'
+        reason: "不允许空 catch"
+    python:
+      - pattern: 'print\('
+        reason: "必须用 logging 模块"
+      - pattern: 'except\s*:\s*(pass|#.*)?$'
+        reason: "不允许裸 except，必须指定异常类型"
+      - pattern: 'cursor\.execute\(f["\x27]'
+        reason: "必须用参数化查询，禁止 f-string 拼 SQL"
+    javascript:
+      - pattern: 'console\.(log|warn|error)\('
+        reason: "必须用 logger 或调试工具"
+      - pattern: ': any'
+        reason: "禁止 any 类型，必须定义具体类型"
+      - pattern: 'eval\('
+        reason: "禁止 eval"
+
+# --- 安全红线（跨栈通用，检查逻辑实现在 scripts/taste-check.sh 中，改两边需同步） ---
+security:
+  - match: "SQL拼接|字符串拼接SQL"
+    fix: "必须用参数化查询（prepared statement / ORM）"
+  - match: "密码明文|password.*=.*['\"][^'\"]+"
+    fix: "必须用 BCrypt / argon2 哈希"
+  - match: "硬编码密钥|apiKey.*=.*['\"]"
+    fix: "必须环境变量或配置中心"
+  - match: "XSS|innerHTML"
+    fix: "必须用 textContent 或模板引擎转义"
+
+# --- 代码风格阈值（跨栈通用） ---
+style:
+  max_method_lines: 30      # 函数/方法超过此行数报警告
+  max_class_lines: 300      # 类超过此行数报警告
+  max_file_lines: 500       # 单文件超过此行数报警告
+  max_params: 4             # 函数参数超过 4 个报警告
+  no_todo_in_main: true     # 主分支不允许 TODO 残留
+  require_comment_for_complexity: true  # 圈复杂度 > 5 必须有注释
