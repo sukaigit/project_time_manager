@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.timemanager.mapper.WorkHourMapper">
+
+    <resultMap id="workHourMap" type="WorkHour">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="project_id" property="projectId"/>
+        <result column="module_id" property="moduleId"/>
+        <result column="work_date" property="workDate"/>
+        <result column="hours" property="hours"/>
+        <result column="content" property="content"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="user_name" property="userName"/>
+        <result column="project_name" property="projectName"/>
+        <result column="module_name" property="moduleName"/>
+    </resultMap>
+
+    <sql id="baseColumns">
+        wh.id, wh.user_id, wh.project_id, wh.module_id, wh.work_date,
+        wh.hours, wh.content, wh.status, wh.create_time, wh.update_time, wh.is_deleted
+    </sql>
+
+    <select id="findById" resultMap="workHourMap">
+        SELECT <include refid="baseColumns"/>,
+               u.name AS user_name,
+               p.name AS project_name,
+               m.name AS module_name
+        FROM tb_work_hour wh
+        LEFT JOIN tb_user u ON wh.user_id = u.id
+        LEFT JOIN tb_project p ON wh.project_id = p.id
+        LEFT JOIN tb_task_module m ON wh.module_id = m.id
+        WHERE wh.id = #{id} AND wh.is_deleted = 0
+    </select>
+
+    <select id="findByPage" resultMap="workHourMap">
+        SELECT <include refid="baseColumns"/>,
+               u.name AS user_name,
+               p.name AS project_name,
+               m.name AS module_name
+        FROM tb_work_hour wh
+        LEFT JOIN tb_user u ON wh.user_id = u.id
+        LEFT JOIN tb_project p ON wh.project_id = p.id
+        LEFT JOIN tb_task_module m ON wh.module_id = m.id
+        WHERE wh.is_deleted = 0
+        <if test="!isAdmin">
+            AND wh.user_id = #{userId}
+        </if>
+        <if test="projectId != null">
+            AND wh.project_id = #{projectId}
+        </if>
+        <if test="startDate != null">
+            AND wh.work_date &gt;= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND wh.work_date &lt;= #{endDate}
+        </if>
+        <if test="status != null and status != ''">
+            AND wh.status = #{status}
+        </if>
+        ORDER BY wh.work_date DESC, wh.create_time DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countByFilters" resultType="long">
+        SELECT COUNT(*)
+        FROM tb_work_hour wh
+        WHERE wh.is_deleted = 0
+        <if test="!isAdmin">
+            AND wh.user_id = #{userId}
+        </if>
+        <if test="projectId != null">
+            AND wh.project_id = #{projectId}
+        </if>
+        <if test="startDate != null">
+            AND wh.work_date &gt;= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND wh.work_date &lt;= #{endDate}
+        </if>
+        <if test="status != null and status != ''">
+            AND wh.status = #{status}
+        </if>
+    </select>
+
+    <select id="sumHoursByModule" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(hours), 0)
+        FROM tb_work_hour
+        WHERE module_id = #{moduleId} AND is_deleted = 0
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO tb_work_hour (user_id, project_id, module_id, work_date, hours, content, status)
+        VALUES (#{userId}, #{projectId}, #{moduleId}, #{workDate}, #{hours}, #{content}, #{status})
+    </insert>
+
+    <update id="update">
+        UPDATE tb_work_hour
+        <set>
+            <if test="projectId != null">project_id = #{projectId},</if>
+            <if test="moduleId != null">module_id = #{moduleId},</if>
+            <if test="workDate != null">work_date = #{workDate},</if>
+            <if test="hours != null">hours = #{hours},</if>
+            <if test="content != null">content = #{content},</if>
+            <if test="status != null">status = #{status},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <update id="delete">
+        UPDATE tb_work_hour SET is_deleted = 1 WHERE id = #{id}
+    </update>
+
+</mapper>
