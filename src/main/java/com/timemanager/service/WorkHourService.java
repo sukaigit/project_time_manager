@@ -9,6 +9,7 @@ import com.timemanager.entity.WorkHour;
 import com.timemanager.mapper.TaskModuleMapper;
 import com.timemanager.mapper.UserMapper;
 import com.timemanager.mapper.WorkHourMapper;
+import com.timemanager.service.LogService;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -23,11 +24,13 @@ public class WorkHourService {
     private final WorkHourMapper workHourMapper;
     private final TaskModuleMapper moduleMapper;
     private final UserMapper userMapper;
+    private final LogService logService;
 
-    public WorkHourService(WorkHourMapper workHourMapper, TaskModuleMapper moduleMapper, UserMapper userMapper) {
+    public WorkHourService(WorkHourMapper workHourMapper, TaskModuleMapper moduleMapper, UserMapper userMapper, LogService logService) {
         this.workHourMapper = workHourMapper;
         this.moduleMapper = moduleMapper;
         this.userMapper = userMapper;
+        this.logService = logService;
     }
 
     // ====== 查询 ======
@@ -93,6 +96,8 @@ public class WorkHourService {
         wh.setContent(req.getContent());
         wh.setStatus("PENDING");
         workHourMapper.insert(wh);
+        logService.save(currentUserId, "CREATE", "工时:" + wh.getId(),
+                "{\"projectId\":" + req.getProjectId() + ",\"hours\":" + req.getHours() + ",\"workDate\":\"" + req.getWorkDate() + "\"}");
         return wh;
     }
 
@@ -119,6 +124,8 @@ public class WorkHourService {
         wh.setStatus("PENDING");
 
         workHourMapper.update(wh);
+        logService.save(wh.getUserId(), "UPDATE", "工时:" + wh.getId(),
+                "{\"projectId\":" + wh.getProjectId() + ",\"hours\":" + wh.getHours() + ",\"status\":\"PENDING\"}");
     }
 
     // ====== 删除 ======
@@ -135,6 +142,8 @@ public class WorkHourService {
         }
 
         workHourMapper.delete(id);
+        logService.save(wh.getUserId(), "DELETE", "工时:" + wh.getId(),
+                "{\"projectId\":" + wh.getProjectId() + ",\"hours\":" + wh.getHours() + ",\"workDate\":\"" + wh.getWorkDate() + "\"}");
     }
 
     // ====== 预算检查 ======

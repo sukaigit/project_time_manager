@@ -5,6 +5,7 @@ import com.timemanager.entity.Approval;
 import com.timemanager.entity.User;
 import com.timemanager.entity.WorkHour;
 import com.timemanager.mapper.*;
+import com.timemanager.service.LogService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,15 +19,18 @@ public class ApprovalService {
     private final ProjectMapper projectMapper;
     private final ApprovalMapper approvalMapper;
     private final UserMapper userMapper;
+    private final LogService logService;
 
     public ApprovalService(WorkHourMapper workHourMapper,
                            ProjectMapper projectMapper,
                            ApprovalMapper approvalMapper,
-                           UserMapper userMapper) {
+                           UserMapper userMapper,
+                           LogService logService) {
         this.workHourMapper = workHourMapper;
         this.projectMapper = projectMapper;
         this.approvalMapper = approvalMapper;
         this.userMapper = userMapper;
+        this.logService = logService;
     }
 
     /**
@@ -122,6 +126,12 @@ public class ApprovalService {
             approval.setComment(comment);
             approval.setApproveTime(LocalDateTime.now());
             approvalMapper.insert(approval);
+
+            // 记录操作日志
+            String logAction = "APPROVED".equals(status) ? "APPROVE" : "REJECT";
+            User approver = userMapper.findById(currentUserId);
+            logService.save(currentUserId, logAction, "工时:" + workHourId,
+                    "{\"workHourId\":" + workHourId + ",\"approver\":\"" + (approver != null ? approver.getName() : "") + "\",\"status\":\"" + status + "\"}");
         }
     }
 

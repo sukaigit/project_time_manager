@@ -17,11 +17,13 @@ public class AuthService {
     private final UserMapper userMapper;
     private final JwtUtil jwtUtil;
     private final BCryptPasswordEncoder encoder;
+    private final LogService logService;
 
-    public AuthService(UserMapper userMapper, JwtUtil jwtUtil, BCryptPasswordEncoder encoder) {
+    public AuthService(UserMapper userMapper, JwtUtil jwtUtil, BCryptPasswordEncoder encoder, LogService logService) {
         this.userMapper = userMapper;
         this.jwtUtil = jwtUtil;
         this.encoder = encoder;
+        this.logService = logService;
     }
 
     public LoginResponse login(LoginRequest req) {
@@ -34,6 +36,7 @@ public class AuthService {
         }
         String token = jwtUtil.generateToken(user.getId(), user.getUsername(), user.getRole());
         boolean firstLogin = user.getFirstLogin() != null && user.getFirstLogin() == 1;
+        logService.save(user.getId(), "LOGIN", "用户登录", "{\"username\":\"" + user.getUsername() + "\"}");
         return new LoginResponse(token, user.getId(), user.getUsername(), user.getName(), user.getRole(), firstLogin);
     }
 

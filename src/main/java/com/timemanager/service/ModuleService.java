@@ -4,6 +4,8 @@ import com.timemanager.common.BusinessException;
 import com.timemanager.dto.ModuleRequest;
 import com.timemanager.entity.TaskModule;
 import com.timemanager.mapper.TaskModuleMapper;
+import com.timemanager.service.LogService;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -12,9 +14,16 @@ import java.util.List;
 public class ModuleService {
 
     private final TaskModuleMapper moduleMapper;
+    private final LogService logService;
 
-    public ModuleService(TaskModuleMapper moduleMapper) {
+    public ModuleService(TaskModuleMapper moduleMapper, LogService logService) {
         this.moduleMapper = moduleMapper;
+        this.logService = logService;
+    }
+
+    private Long getCurrentUserId() {
+        Object details = SecurityContextHolder.getContext().getAuthentication().getDetails();
+        return details instanceof Long ? (Long) details : null;
     }
 
     public List<TaskModule> listModules(Long projectId) {
@@ -32,6 +41,8 @@ public class ModuleService {
         module.setDescription(req.getDescription());
         module.setEstimatedHours(req.getEstimatedHours() != null ? req.getEstimatedHours() : 0);
         moduleMapper.insert(module);
+        logService.save(getCurrentUserId(), "CREATE", "模块:" + module.getName(),
+                "{\"id\":" + module.getId() + ",\"name\":\"" + module.getName() + "\",\"projectId\":" + projectId + "}");
         return module;
     }
 
@@ -44,6 +55,8 @@ public class ModuleService {
         if (req.getDescription() != null) module.setDescription(req.getDescription());
         if (req.getEstimatedHours() != null) module.setEstimatedHours(req.getEstimatedHours());
         moduleMapper.update(module);
+        logService.save(getCurrentUserId(), "UPDATE", "模块:" + module.getName(),
+                "{\"id\":" + id + ",\"name\":\"" + module.getName() + "\"}");
     }
 
     public void deleteModule(Long id) {
@@ -52,5 +65,7 @@ public class ModuleService {
             throw new BusinessException("模块不存在");
         }
         moduleMapper.delete(id);
+        logService.save(getCurrentUserId(), "DELETE", "模块:" + module.getName(),
+                "{\"id\":" + id + ",\"name\":\"" + module.getName() + "\"}");
     }
 }

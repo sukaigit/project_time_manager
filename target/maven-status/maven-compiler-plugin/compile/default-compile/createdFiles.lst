@@ -1,14 +1,17 @@
 com/timemanager/service/ModuleService.class
 com/timemanager/TimeManagerApplication.class
 com/timemanager/common/Result.class
+com/timemanager/service/LogService.class
 com/timemanager/service/ProjectService.class
 com/timemanager/entity/TaskModule.class
 com/timemanager/config/SecurityConfig.class
+com/timemanager/controller/SystemController.class
 com/timemanager/config/JwtAuthFilter.class
 com/timemanager/controller/ModuleController.class
 com/timemanager/dto/UserRequest.class
 com/timemanager/mapper/ProjectMapper.class
 com/timemanager/dto/PasswordRequest.class
+com/timemanager/entity/OperationLog.class
 com/timemanager/entity/Approval.class
 com/timemanager/dto/PageResult.class
 com/timemanager/config/JwtUtil.class
@@ -17,6 +20,7 @@ com/timemanager/service/AuthService.class
 com/timemanager/service/WorkHourService.class
 com/timemanager/dto/WorkHourRequest.class
 com/timemanager/entity/WorkHour.class
+com/timemanager/service/ReportService.class
 com/timemanager/controller/DashboardController.class
 com/timemanager/mapper/ApprovalMapper.class
 com/timemanager/mapper/UserMapper.class
@@ -29,6 +33,7 @@ com/timemanager/dto/LoginRequest.class
 com/timemanager/common/BusinessException.class
 com/timemanager/controller/WorkHourController.class
 com/timemanager/entity/User.class
+com/timemanager/mapper/OperationLogMapper.class
 com/timemanager/mapper/TaskModuleMapper.class
 com/timemanager/service/UserService.class
 com/timemanager/common/ResultCode.class
@@ -39,4 +44,5 @@ com/timemanager/common/GlobalExceptionHandler.class
 com/timemanager/service/DashboardService.class
 com/timemanager/mapper/WorkHourMapper.class
 com/timemanager/controller/AuthController.class
+com/timemanager/controller/ReportController.class
 com/timemanager/controller/ApprovalController.class

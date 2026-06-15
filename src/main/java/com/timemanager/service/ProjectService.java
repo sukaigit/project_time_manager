@@ -5,6 +5,8 @@ import com.timemanager.dto.PageResult;
 import com.timemanager.dto.ProjectRequest;
 import com.timemanager.entity.Project;
 import com.timemanager.mapper.ProjectMapper;
+import com.timemanager.service.LogService;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -14,9 +16,16 @@ import java.util.List;
 public class ProjectService {
 
     private final ProjectMapper projectMapper;
+    private final LogService logService;
 
-    public ProjectService(ProjectMapper projectMapper) {
+    public ProjectService(ProjectMapper projectMapper, LogService logService) {
         this.projectMapper = projectMapper;
+        this.logService = logService;
+    }
+
+    private Long getCurrentUserId() {
+        Object details = SecurityContextHolder.getContext().getAuthentication().getDetails();
+        return details instanceof Long ? (Long) details : null;
     }
 
     public PageResult<Project> listProjects(int page, int size, String keyword) {
@@ -42,6 +51,8 @@ public class ProjectService {
         project.setEndDate(req.getEndDate() != null ? LocalDate.parse(req.getEndDate()) : null);
         project.setStatus(req.getStatus() != null ? req.getStatus() : "ACTIVE");
         projectMapper.insert(project);
+        logService.save(getCurrentUserId(), "CREATE", "项目:" + project.getName(),
+                "{\"id\":" + project.getId() + ",\"name\":\"" + project.getName() + "\",\"managerId\":" + project.getManagerId() + "}");
         return project;
     }
 
@@ -57,6 +68,8 @@ public class ProjectService {
         if (req.getEndDate() != null) project.setEndDate(LocalDate.parse(req.getEndDate()));
         if (req.getStatus() != null) project.setStatus(req.getStatus());
         projectMapper.update(project);
+        logService.save(getCurrentUserId(), "UPDATE", "项目:" + project.getName(),
+                "{\"id\":" + id + ",\"name\":\"" + project.getName() + "\"}");
     }
 
     public void deleteProject(Long id) {
@@ -65,6 +78,8 @@ public class ProjectService {
             throw new BusinessException("项目不存在");
         }
         projectMapper.delete(id);
+        logService.save(getCurrentUserId(), "DELETE", "项目:" + project.getName(),
+                "{\"id\":" + id + ",\"name\":\"" + project.getName() + "\"}");
     }
 
     public Project getProjectById(Long id) {

@@ -79,4 +79,80 @@ public interface WorkHourMapper {
                                            @Param("isAdmin") boolean isAdmin,
                                            @Param("isDeptManager") boolean isDeptManager,
                                            @Param("isPm") boolean isPm);
+
+    // ====== 报表 ======
+
+    List<Map<String, Object>> reportPersonal(@Param("userId") Long userId,
+                                              @Param("year") int year,
+                                              @Param("month") int month);
+
+    BigDecimal reportPersonalTotal(@Param("userId") Long userId,
+                                    @Param("year") int year,
+                                    @Param("month") int month);
+
+    List<Map<String, Object>> reportProject(@Param("projectId") Long projectId,
+                                             @Param("year") int year,
+                                             @Param("month") int month);
+
+    BigDecimal reportProjectTotal(@Param("projectId") Long projectId,
+                                   @Param("year") int year,
+                                   @Param("month") int month);
+
+    List<Map<String, Object>> reportDepartment(@Param("year") int year,
+                                                @Param("month") int month);
+
+    Map<String, Object> reportDepartmentAgg(@Param("year") int year,
+                                             @Param("month") int month);
+
+    // ====== 报表：PM视角 ======
+
+    List<Map<String, Object>> reportPersonalByPm(@Param("userId") Long userId,
+                                                  @Param("year") int year,
+                                                  @Param("month") int month,
+                                                  @Param("managerId") Long managerId);
+
+    BigDecimal reportPersonalTotalByPm(@Param("userId") Long userId,
+                                        @Param("year") int year,
+                                        @Param("month") int month,
+                                        @Param("managerId") Long managerId);
+
+    List<Map<String, Object>> reportProjectByManager(@Param("projectId") Long projectId,
+                                                      @Param("year") int year,
+                                                      @Param("month") int month,
+                                                      @Param("managerId") Long managerId);
+
+    BigDecimal reportProjectTotalByManager(@Param("projectId") Long projectId,
+                                            @Param("year") int year,
+                                            @Param("month") int month,
+                                            @Param("managerId") Long managerId);
+
+    List<Map<String, Object>> reportDepartmentByManager(@Param("year") int year,
+                                                         @Param("month") int month,
+                                                         @Param("managerId") Long managerId);
+
+    Map<String, Object> reportDepartmentAggByManager(@Param("year") int year,
+                                                      @Param("month") int month,
+                                                      @Param("managerId") Long managerId);
+
+    // ====== 报表：部门级（DEPT_MANAGER 视角 = 全部数据） ======
+
+    List<Map<String, Object>> reportPersonalByDept(@Param("year") int year,
+                                                    @Param("month") int month);
+
+    BigDecimal reportPersonalTotalByDept(@Param("year") int year,
+                                          @Param("month") int month);
+
+    List<Map<String, Object>> reportProjectByDept(@Param("projectId") Long projectId,
+                                                   @Param("year") int year,
+                                                   @Param("month") int month);
+
+    BigDecimal reportProjectTotalByDept(@Param("projectId") Long projectId,
+                                         @Param("year") int year,
+                                         @Param("month") int month);
+
+    List<Map<String, Object>> reportDepartmentByDept(@Param("year") int year,
+                                                      @Param("month") int month);
+
+    Map<String, Object> reportDepartmentAggByDept(@Param("year") int year,
+                                                   @Param("month") int month);
 }

@@ -268,4 +268,194 @@
         </if>
     </select>
 
+    <!-- ====== 报表 ====== -->
+
+    <select id="reportPersonal" resultType="java.util.LinkedHashMap">
+        SELECT p.name AS projectName, COALESCE(SUM(wh.hours), 0) AS hours
+        FROM tb_project p
+        LEFT JOIN tb_work_hour wh ON p.id = wh.project_id AND wh.is_deleted = 0
+            AND YEAR(wh.work_date) = #{year} AND MONTH(wh.work_date) = #{month}
+        WHERE p.is_deleted = 0
+          AND p.id IN (SELECT DISTINCT project_id FROM tb_work_hour WHERE user_id = #{userId} AND is_deleted = 0)
+        GROUP BY p.id, p.name
+        ORDER BY hours DESC
+    </select>
+
+    <select id="reportPersonalTotal" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(hours), 0)
+        FROM tb_work_hour
+        WHERE is_deleted = 0
+          AND user_id = #{userId}
+          AND YEAR(work_date) = #{year}
+          AND MONTH(work_date) = #{month}
+    </select>
+
+    <select id="reportProject" resultType="java.util.LinkedHashMap">
+        SELECT tm.name AS moduleName, tm.estimated_hours AS estimatedHours,
+               COALESCE(SUM(wh.hours), 0) AS actualHours
+        FROM tb_task_module tm
+        LEFT JOIN tb_work_hour wh ON tm.id = wh.module_id AND wh.is_deleted = 0
+            AND YEAR(wh.work_date) = #{year} AND MONTH(wh.work_date) = #{month}
+        WHERE tm.project_id = #{projectId} AND tm.is_deleted = 0
+        GROUP BY tm.id, tm.name, tm.estimated_hours
+        ORDER BY actualHours DESC
+    </select>
+
+    <select id="reportProjectTotal" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(hours), 0)
+        FROM tb_work_hour
+        WHERE is_deleted = 0
+          AND project_id = #{projectId}
+          AND YEAR(work_date) = #{year}
+          AND MONTH(work_date) = #{month}
+    </select>
+
+    <select id="reportDepartment" resultType="java.util.LinkedHashMap">
+        SELECT p.name AS projectName, COALESCE(SUM(wh.hours), 0) AS hours
+        FROM tb_project p
+        LEFT JOIN tb_work_hour wh ON p.id = wh.project_id AND wh.is_deleted = 0
+            AND YEAR(wh.work_date) = #{year} AND MONTH(wh.work_date) = #{month}
+        WHERE p.is_deleted = 0
+        GROUP BY p.id, p.name
+        ORDER BY hours DESC
+    </select>
+
+    <select id="reportDepartmentAgg" resultType="java.util.LinkedHashMap">
+        SELECT COALESCE(SUM(hours), 0) AS totalHours,
+               COUNT(DISTINCT user_id) AS userCount
+        FROM tb_work_hour
+        WHERE is_deleted = 0
+          AND YEAR(work_date) = #{year}
+          AND MONTH(work_date) = #{month}
+    </select>
+
+    <!-- ====== 报表：PM视角 ====== -->
+
+    <select id="reportPersonalByPm" resultType="java.util.LinkedHashMap">
+        SELECT p.name AS projectName, COALESCE(SUM(wh.hours), 0) AS hours
+        FROM tb_project p
+        LEFT JOIN tb_work_hour wh ON p.id = wh.project_id AND wh.is_deleted = 0
+            AND YEAR(wh.work_date) = #{year} AND MONTH(wh.work_date) = #{month}
+            AND wh.user_id = #{userId}
+        WHERE p.is_deleted = 0
+          AND p.manager_id = #{managerId}
+        GROUP BY p.id, p.name
+        ORDER BY hours DESC
+    </select>
+
+    <select id="reportPersonalTotalByPm" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(wh.hours), 0)
+        FROM tb_work_hour wh
+        LEFT JOIN tb_project p ON wh.project_id = p.id
+        WHERE wh.is_deleted = 0
+          AND wh.user_id = #{userId}
+          AND p.manager_id = #{managerId}
+          AND YEAR(wh.work_date) = #{year}
+          AND MONTH(wh.work_date) = #{month}
+    </select>
+
+    <select id="reportProjectByManager" resultType="java.util.LinkedHashMap">
+        SELECT tm.name AS moduleName, tm.estimated_hours AS estimatedHours,
+               COALESCE(SUM(wh.hours), 0) AS actualHours
+        FROM tb_task_module tm
+        LEFT JOIN tb_work_hour wh ON tm.id = wh.module_id AND wh.is_deleted = 0
+            AND YEAR(wh.work_date) = #{year} AND MONTH(wh.work_date) = #{month}
+        WHERE tm.project_id = #{projectId} AND tm.is_deleted = 0
+          AND tm.project_id IN (SELECT id FROM tb_project WHERE manager_id = #{managerId})
+        GROUP BY tm.id, tm.name, tm.estimated_hours
+        ORDER BY actualHours DESC
+    </select>
+
+    <select id="reportProjectTotalByManager" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(wh.hours), 0)
+        FROM tb_work_hour wh
+        LEFT JOIN tb_project p ON wh.project_id = p.id
+        WHERE wh.is_deleted = 0
+          AND wh.project_id = #{projectId}
+          AND p.manager_id = #{managerId}
+          AND YEAR(wh.work_date) = #{year}
+          AND MONTH(wh.work_date) = #{month}
+    </select>
+
+    <select id="reportDepartmentByManager" resultType="java.util.LinkedHashMap">
+        SELECT p.name AS projectName, COALESCE(SUM(wh.hours), 0) AS hours
+        FROM tb_project p
+        LEFT JOIN tb_work_hour wh ON p.id = wh.project_id AND wh.is_deleted = 0
+            AND YEAR(wh.work_date) = #{year} AND MONTH(wh.work_date) = #{month}
+        WHERE p.is_deleted = 0
+          AND p.manager_id = #{managerId}
+        GROUP BY p.id, p.name
+        ORDER BY hours DESC
+    </select>
+
+    <select id="reportDepartmentAggByManager" resultType="java.util.LinkedHashMap">
+        SELECT COALESCE(SUM(wh.hours), 0) AS totalHours,
+               COUNT(DISTINCT wh.user_id) AS userCount
+        FROM tb_work_hour wh
+        LEFT JOIN tb_project p ON wh.project_id = p.id
+        WHERE wh.is_deleted = 0
+          AND p.manager_id = #{managerId}
+          AND YEAR(wh.work_date) = #{year}
+          AND MONTH(wh.work_date) = #{month}
+    </select>
+
+    <!-- ====== 报表：部门级（DEPT_MANAGER 视角 = 全部数据） ====== -->
+
+    <select id="reportPersonalByDept" resultType="java.util.LinkedHashMap">
+        SELECT p.name AS projectName, COALESCE(SUM(wh.hours), 0) AS hours
+        FROM tb_project p
+        LEFT JOIN tb_work_hour wh ON p.id = wh.project_id AND wh.is_deleted = 0
+            AND YEAR(wh.work_date) = #{year} AND MONTH(wh.work_date) = #{month}
+        WHERE p.is_deleted = 0
+        GROUP BY p.id, p.name
+        ORDER BY hours DESC
+    </select>
+
+    <select id="reportPersonalTotalByDept" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(hours), 0)
+        FROM tb_work_hour
+        WHERE is_deleted = 0
+          AND YEAR(work_date) = #{year}
+          AND MONTH(work_date) = #{month}
+    </select>
+
+    <select id="reportProjectByDept" resultType="java.util.LinkedHashMap">
+        SELECT tm.name AS moduleName, tm.estimated_hours AS estimatedHours,
+               COALESCE(SUM(wh.hours), 0) AS actualHours
+        FROM tb_task_module tm
+        LEFT JOIN tb_work_hour wh ON tm.id = wh.module_id AND wh.is_deleted = 0
+            AND YEAR(wh.work_date) = #{year} AND MONTH(wh.work_date) = #{month}
+        WHERE tm.project_id = #{projectId} AND tm.is_deleted = 0
+        GROUP BY tm.id, tm.name, tm.estimated_hours
+        ORDER BY actualHours DESC
+    </select>
+
+    <select id="reportProjectTotalByDept" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(hours), 0)
+        FROM tb_work_hour
+        WHERE is_deleted = 0
+          AND project_id = #{projectId}
+          AND YEAR(work_date) = #{year}
+          AND MONTH(work_date) = #{month}
+    </select>
+
+    <select id="reportDepartmentByDept" resultType="java.util.LinkedHashMap">
+        SELECT p.name AS projectName, COALESCE(SUM(wh.hours), 0) AS hours
+        FROM tb_project p
+        LEFT JOIN tb_work_hour wh ON p.id = wh.project_id AND wh.is_deleted = 0
+            AND YEAR(wh.work_date) = #{year} AND MONTH(wh.work_date) = #{month}
+        WHERE p.is_deleted = 0
+        GROUP BY p.id, p.name
+        ORDER BY hours DESC
+    </select>
+
+    <select id="reportDepartmentAggByDept" resultType="java.util.LinkedHashMap">
+        SELECT COALESCE(SUM(hours), 0) AS totalHours,
+               COUNT(DISTINCT user_id) AS userCount
+        FROM tb_work_hour
+        WHERE is_deleted = 0
+          AND YEAR(work_date) = #{year}
+          AND MONTH(work_date) = #{month}
+    </select>
+
 </mapper>

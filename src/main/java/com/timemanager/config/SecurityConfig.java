@@ -35,7 +35,9 @@ public class SecurityConfig {
                 .requestMatchers("/api/approvals/pending").hasAnyRole("PM", "DEPT_MANAGER")
                 .requestMatchers("/api/approvals/batch").hasAnyRole("PM", "DEPT_MANAGER")
                 .requestMatchers("/api/approvals/history").hasAnyRole("PM", "DEPT_MANAGER")
+                .requestMatchers("/api/logs/**").hasRole("ADMIN")
                 .requestMatchers("/api/dashboard/**").authenticated()
+                .requestMatchers("/api/reports/**").authenticated()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

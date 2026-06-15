@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.timemanager.mapper.OperationLogMapper">
+
+    <resultMap id="logMap" type="OperationLog">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="action" property="action"/>
+        <result column="target" property="target"/>
+        <result column="detail" property="detail"/>
+        <result column="create_time" property="createTime"/>
+        <result column="user_name" property="userName"/>
+    </resultMap>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO tb_operation_log (user_id, action, target, detail)
+        VALUES (#{userId}, #{action}, #{target}, #{detail})
+    </insert>
+
+    <select id="findByPage" resultMap="logMap">
+        SELECT l.*, u.name AS user_name
+        FROM tb_operation_log l
+        LEFT JOIN tb_user u ON l.user_id = u.id
+        <where>
+            <if test="userId != null">
+                AND l.user_id = #{userId}
+            </if>
+            <if test="action != null and action != ''">
+                AND l.action = #{action}
+            </if>
+            <if test="startDate != null">
+                AND l.create_time &gt;= #{startDate}
+            </if>
+            <if test="endDate != null">
+                AND l.create_time &lt;= #{endDate}
+            </if>
+        </where>
+        ORDER BY l.create_time DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countByFilters" resultType="long">
+        SELECT COUNT(*)
+        FROM tb_operation_log l
+        <where>
+            <if test="userId != null">
+                AND l.user_id = #{userId}
+            </if>
+            <if test="action != null and action != ''">
+                AND l.action = #{action}
+            </if>
+            <if test="startDate != null">
+                AND l.create_time &gt;= #{startDate}
+            </if>
+            <if test="endDate != null">
+                AND l.create_time &lt;= #{endDate}
+            </if>
+        </where>
+    </select>
+
+</mapper>

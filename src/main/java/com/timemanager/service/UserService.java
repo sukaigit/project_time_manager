@@ -5,6 +5,7 @@ import com.timemanager.dto.PageResult;
 import com.timemanager.dto.UserRequest;
 import com.timemanager.entity.User;
 import com.timemanager.mapper.UserMapper;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -15,10 +16,17 @@ public class UserService {
 
     private final UserMapper userMapper;
     private final BCryptPasswordEncoder encoder;
+    private final LogService logService;
 
-    public UserService(UserMapper userMapper, BCryptPasswordEncoder encoder) {
+    public UserService(UserMapper userMapper, BCryptPasswordEncoder encoder, LogService logService) {
         this.userMapper = userMapper;
         this.encoder = encoder;
+        this.logService = logService;
+    }
+
+    private Long getCurrentUserId() {
+        Object details = SecurityContextHolder.getContext().getAuthentication().getDetails();
+        return details instanceof Long ? (Long) details : null;
     }
 
     public PageResult<User> listUsers(int page, int size, String keyword) {
@@ -46,6 +54,7 @@ public class UserService {
         user.setStatus(req.getStatus() != null ? req.getStatus() : 1);
         user.setFirstLogin(1);
         userMapper.insert(user);
+        logService.save(getCurrentUserId(), "CREATE", "用户:" + user.getUsername(), "{\"id\":" + user.getId() + ",\"name\":\"" + user.getName() + "\"}");
         return user;
     }
 
@@ -61,6 +70,8 @@ public class UserService {
         if (req.getRole() != null) user.setRole(req.getRole());
         if (req.getStatus() != null) user.setStatus(req.getStatus());
         userMapper.update(user);
+        logService.save(getCurrentUserId(), "UPDATE", "用户:" + user.getUsername(),
+                "{\"id\":" + id + ",\"name\":\"" + (req.getName() != null ? req.getName() : "") + "\"}");
     }
 
     public void deleteUser(Long id) {
@@ -69,6 +80,8 @@ public class UserService {
             throw new BusinessException("用户不存在");
         }
         userMapper.delete(id);
+        logService.save(getCurrentUserId(), "DELETE", "用户:" + user.getUsername(),
+                "{\"id\":" + id + ",\"username\":\"" + user.getUsername() + "\"}");
     }
 
     public void updateRole(Long id, String role) {
@@ -78,6 +91,8 @@ public class UserService {
         }
         user.setRole(role);
         userMapper.update(user);
+        logService.save(getCurrentUserId(), "UPDATE", "用户角色:" + user.getUsername(),
+                "{\"id\":" + id + ",\"role\":\"" + role + "\"}");
     }
 
     public void resetPassword(Long id) {
@@ -88,6 +103,8 @@ public class UserService {
         user.setPassword(encoder.encode("123456"));
         user.setFirstLogin(1);
         userMapper.update(user);
+        logService.save(getCurrentUserId(), "UPDATE", "用户密码重置:" + user.getUsername(),
+                "{\"id\":" + id + ",\"username\":\"" + user.getUsername() + "\"}");
     }
 
     public List<User> listByRole(String role) {
