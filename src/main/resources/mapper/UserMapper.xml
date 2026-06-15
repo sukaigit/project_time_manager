@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.timemanager.mapper.UserMapper">
+
+    <resultMap id="userMap" type="User">
+        <id column="id" property="id"/>
+        <result column="username" property="username"/>
+        <result column="password" property="password"/>
+        <result column="name" property="name"/>
+        <result column="email" property="email"/>
+        <result column="phone" property="phone"/>
+        <result column="department" property="department"/>
+        <result column="role" property="role"/>
+        <result column="status" property="status"/>
+        <result column="first_login" property="firstLogin"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="is_deleted" property="isDeleted"/>
+    </resultMap>
+
+    <sql id="baseColumns">
+        id, username, password, name, email, phone, department, role, status,
+        first_login, create_time, update_time, is_deleted
+    </sql>
+
+    <select id="findByUsername" resultMap="userMap">
+        SELECT <include refid="baseColumns"/>
+        FROM tb_user
+        WHERE username = #{username} AND is_deleted = 0
+    </select>
+
+    <select id="findById" resultMap="userMap">
+        SELECT <include refid="baseColumns"/>
+        FROM tb_user
+        WHERE id = #{id} AND is_deleted = 0
+    </select>
+
+    <select id="findAll" resultMap="userMap">
+        SELECT <include refid="baseColumns"/>
+        FROM tb_user
+        WHERE is_deleted = 0
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO tb_user (username, password, name, email, phone, department, role, status, first_login)
+        VALUES (#{username}, #{password}, #{name}, #{email}, #{phone}, #{department}, #{role}, #{status}, #{firstLogin})
+    </insert>
+
+    <update id="update">
+        UPDATE tb_user
+        <set>
+            <if test="name != null">name = #{name},</if>
+            <if test="email != null">email = #{email},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="department != null">department = #{department},</if>
+            <if test="role != null">role = #{role},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="password != null">password = #{password},</if>
+            <if test="firstLogin != null">first_login = #{firstLogin},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <update id="delete">
+        UPDATE tb_user SET is_deleted = 1 WHERE id = #{id}
+    </update>
+
+</mapper>
