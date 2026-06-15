@@ -61,6 +61,13 @@
         </if>
     </select>
 
+    <select id="findByRole" resultMap="userMap">
+        SELECT <include refid="baseColumns"/>
+        FROM tb_user
+        WHERE is_deleted = 0 AND status = 1 AND role = #{role}
+        ORDER BY name ASC
+    </select>
+
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO tb_user (username, password, name, email, phone, department, role, status, first_login)
         VALUES (#{username}, #{password}, #{name}, #{email}, #{phone}, #{department}, #{role}, #{status}, #{firstLogin})

@@ -12,6 +12,7 @@ public interface UserMapper {
     List<User> findAll();
     List<User> findByPage(@Param("offset") int offset, @Param("size") int size, @Param("keyword") String keyword);
     long countByKeyword(@Param("keyword") String keyword);
+    List<User> findByRole(@Param("role") String role);
     void insert(User user);
     void update(User user);
     void delete(@Param("id") Long id);

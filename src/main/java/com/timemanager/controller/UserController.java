@@ -10,6 +10,7 @@ import com.timemanager.service.UserService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -20,6 +21,11 @@ public class UserController {
 
     public UserController(UserService userService) {
         this.userService = userService;
+    }
+
+    @GetMapping("/pm-list")
+    public Result<List<User>> listPms() {
+        return Result.success(userService.listByRole("PM"));
     }
 
     @GetMapping

@@ -89,4 +89,8 @@ public class UserService {
         user.setFirstLogin(1);
         userMapper.update(user);
     }
+
+    public List<User> listByRole(String role) {
+        return userMapper.findByRole(role);
+    }
 }
