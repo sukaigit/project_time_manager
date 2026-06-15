@@ -1,52 +1,157 @@
-# 工时管理系统 - 功能规格
+# 工时管理系统 - 功能规格（字段级）
 
 ## 1. 系统基础
 - 登录：用户名 + 密码 + 图形验证码 → JWT token
 - 退出：前端清除 token，跳转登录页
-- 密码修改：用户自助修改
-- 认证方式：JWT（Spring Security 拦截），前端 Authorization header
+- 密码修改：需旧密码验证，新密码 ≥ 6 位，BCrypt 加密
+- 首次登录：默认密码 123456，first_login=1 标记，需强制修改
+- 认证方式：JWT（Spring Security），前端 Authorization header
 
 ## 2. 用户管理（系统管理员）
-- 用户CRUD：用户名、密码（BCrypt）、姓名、邮箱、手机号
-- 角色分配：普通用户/项目经理/部门经理/系统管理员
-- 权限控制：基于角色的接口鉴权
 
-## 3. 项目管理（项目经理）
-- 项目CRUD：项目名称、描述、起始日期、状态
-- 项目经理指派：每个项目关联一个项目经理
-- 项目状态：进行中/已结束
+### 字段
+| 字段 | 类型 | 约束 |
+|:-----|:-----|:-----|
+| id | BIGINT | PK 自增 |
+| username | VARCHAR(50) | 唯一 |
+| password | VARCHAR(255) | BCrypt |
+| name | VARCHAR(50) | NOT NULL |
+| email | VARCHAR(100) | 可空 |
+| phone | VARCHAR(20) | 可空 |
+| department | VARCHAR(50) | 默认'研发与交付中心' |
+| role | VARCHAR(20) | USER/PM/DEPT_MANAGER/ADMIN |
+| status | TINYINT | 1启用 0禁用 |
+| first_login | TINYINT | 1是 0否 |
+| is_deleted | TINYINT | 逻辑删除 |
 
-## 4. 任务模块管理（项目经理）
-- 项目经理为项目拆分任务模块
-- 任务模块CRUD：模块名称、所属项目、描述、预估工时（预算）
-- 典型任务模块：需求分析、系统设计、编码开发、单元测试、集成测试、部署上线、运维支持
+### API
+- GET /api/users — 分页列表，支持搜索
+- POST /api/users — 新增（密码默认 123456）
+- PUT /api/users/{id} — 编辑
+- DELETE /api/users/{id} — 逻辑删除
+- PUT /api/users/{id}/role — 分配角色
+- PUT /api/users/{id}/reset-password — 重置密码为 123456
+
+## 3. 项目管理（项目经理/管理员）
+
+### 字段
+| 字段 | 类型 | 约束 |
+|:-----|:-----|:-----|
+| id | BIGINT | PK 自增 |
+| name | VARCHAR(200) | NOT NULL |
+| description | TEXT | 可空 |
+| manager_id | BIGINT | FK→tb_user，仅限 PM 角色 |
+| start_date | DATE | 可空 |
+| end_date | DATE | 可空 |
+| status | VARCHAR(20) | ACTIVE/FINISHED |
+| is_deleted | TINYINT | 逻辑删除 |
+
+### API
+- GET /api/projects — 分页列表
+- POST /api/projects — 新增（manager_id 限 PM 角色）
+- PUT /api/projects/{id} — 编辑
+- DELETE /api/projects/{id} — 逻辑删除
+
+## 4. 任务模块管理（项目经理/管理员）
+
+### 字段
+| 字段 | 类型 | 约束 |
+|:-----|:-----|:-----|
+| id | BIGINT | PK 自增 |
+| project_id | BIGINT | FK→tb_project |
+| name | VARCHAR(200) | NOT NULL |
+| description | TEXT | 可空 |
+| estimated_hours | INT | NOT NULL，默认0（整数） |
+| is_deleted | TINYINT | 逻辑删除 |
+
+### API
+- GET /api/projects/{projectId}/modules — 按项目查询
+- POST /api/projects/{projectId}/modules — 新增
+- PUT /api/modules/{id} — 编辑
+- DELETE /api/modules/{id} — 逻辑删除
 
 ## 5. 工时填报
-- 普通用户：选择日期 + 项目 + 任务模块 + 小时数 + 工作内容
-- 项目经理：选择日期 + 项目 + 小时数 + 工作内容（不选任务模块）
-- 同一日期可填多个项目
-- 约束：普通用户受任务模块预算约束，累计达到上限后该模块不可再报
-- 已审批的工时不可修改
-- 未审批的工时可修改/删除
 
-## 6. 工时审批（两级）
-- 普通用户 → 项目经理审批
-- 项目经理 → 部门经理审批
-- 审批通过/驳回（单条或批量）
-- 审批后数据锁定
+### 字段
+| 字段 | 类型 | 约束 |
+|:-----|:-----|:-----|
+| id | BIGINT | PK 自增 |
+| user_id | BIGINT | FK→tb_user |
+| project_id | BIGINT | FK→tb_project |
+| module_id | BIGINT | FK→tb_task_module，PM可空 |
+| work_date | DATE | NOT NULL |
+| hours | DECIMAL(4,1) | NOT NULL |
+| content | TEXT | 可空 |
+| status | VARCHAR(20) | PENDING/APPROVED/REJECTED |
+| is_deleted | TINYINT | 逻辑删除 |
+
+### 规则
+- 工时任意填，每日不限制
+- 普通用户累计工时 ≥ estimated_hours 时不可再报该模块
+- 已审批工时不可修改/删除
+- 未审批工时可修改/删除
+
+### API
+- GET /api/work-hours — 我的工时（分页+筛选）
+- POST /api/work-hours — 填报
+- PUT /api/work-hours/{id} — 修改
+- DELETE /api/work-hours/{id} — 删除
+
+## 6. 工时审批
+
+### 字段
+| 字段 | 类型 | 约束 |
+|:-----|:-----|:-----|
+| id | BIGINT | PK 自增 |
+| work_hour_id | BIGINT | FK→tb_work_hour |
+| approver_id | BIGINT | FK→tb_user |
+| status | VARCHAR(20) | APPROVED/REJECTED |
+| comment | TEXT | 可空 |
+| approve_time | DATETIME | 可空 |
+
+### 流程
+- USER → PM 审批，PM → DEPT_MANAGER 审批
+- 部门经理不填工时
+- 支持批量审批
+- 驳回重提生成新审批记录
+
+### API
+- GET /api/approvals/pending — 我的待审批列表
+- PUT /api/approvals/batch — 批量审批（[{id, status, comment}]）
+- GET /api/approvals/history — 审批历史
 
 ## 7. 首页大屏
-- 今日填报概况：提交人数、总工时
-- 本月工时完成率：实际 vs 上限
-- 各项目工时分布
-- 部门整体概览
+
+### API
+- GET /api/dashboard/today — 今日概况（提交人数、总工时）
+- GET /api/dashboard/pending — 我的待办（待审批数）
+- GET /api/dashboard/monthly-rate — 本月完成率
+- GET /api/dashboard/project-distribution — 项目工时分布
+- GET /api/dashboard/overview — 部门整体概览
 
 ## 8. 统计报表
-- 个人工时统计（月/年）
-- 项目工时统计（月/年），展示实报 vs 预算对比
-- 部门工时统计（月/年）
-- 支持 Excel/CSV 导出
 
-## 9. 系统管理（系统管理员）
-- 角色管理
-- 操作日志
+### API
+- GET /api/reports/personal?year=&month= — 个人统计
+- GET /api/reports/project?year=&month=&projectId= — 项目统计
+- GET /api/reports/department?year=&month= — 部门统计
+- GET /api/reports/export?type=&year=&month= — Excel 导出
+
+## 9. 系统管理
+
+### API
+- GET /api/logs — 操作日志列表（分页+筛选）
+- PUT /api/auth/password — 修改密码（需旧密码验证）
+
+## 10. 权限矩阵
+
+| 功能 | ADMIN | DEPT_MANAGER | PM | USER |
+|:-----|:-----:|:------------:|:--:|:----:|
+| 用户管理 | ✅ | — | — | — |
+| 项目管理 | ✅ | — | ✅ | — |
+| 模块管理 | ✅ | — | ✅(所属项目) | — |
+| 工时填报 | ✅ | — | ✅ | ✅ |
+| 工时审批 | — | ✅(PM的) | ✅(USER的) | — |
+| 首页大屏 | ✅(全) | ✅(部门) | ✅(项目) | ✅(个人) |
+| 统计报表 | ✅(全) | ✅(部门) | ✅(项目) | ✅(个人) |
+| 操作日志 | ✅ | — | — | — |
