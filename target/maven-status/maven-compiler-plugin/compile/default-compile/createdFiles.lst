@@ -9,6 +9,7 @@ com/timemanager/controller/ModuleController.class
 com/timemanager/dto/UserRequest.class
 com/timemanager/mapper/ProjectMapper.class
 com/timemanager/dto/PasswordRequest.class
+com/timemanager/entity/Approval.class
 com/timemanager/dto/PageResult.class
 com/timemanager/config/JwtUtil.class
 com/timemanager/dto/ProjectRequest.class
@@ -16,6 +17,8 @@ com/timemanager/service/AuthService.class
 com/timemanager/service/WorkHourService.class
 com/timemanager/dto/WorkHourRequest.class
 com/timemanager/entity/WorkHour.class
+com/timemanager/controller/DashboardController.class
+com/timemanager/mapper/ApprovalMapper.class
 com/timemanager/mapper/UserMapper.class
 com/timemanager/controller/UserController.class
 com/timemanager/controller/ProjectController.class
@@ -31,6 +34,9 @@ com/timemanager/service/UserService.class
 com/timemanager/common/ResultCode.class
 com/timemanager/dto/RoleRequest.class
 com/timemanager/entity/Project.class
+com/timemanager/service/ApprovalService.class
 com/timemanager/common/GlobalExceptionHandler.class
+com/timemanager/service/DashboardService.class
 com/timemanager/mapper/WorkHourMapper.class
 com/timemanager/controller/AuthController.class
+com/timemanager/controller/ApprovalController.class

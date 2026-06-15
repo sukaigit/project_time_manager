@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.timemanager.mapper.ApprovalMapper">
+
+    <resultMap id="approvalMap" type="Approval">
+        <id column="id" property="id"/>
+        <result column="work_hour_id" property="workHourId"/>
+        <result column="approver_id" property="approverId"/>
+        <result column="status" property="status"/>
+        <result column="comment" property="comment"/>
+        <result column="approve_time" property="approveTime"/>
+        <result column="create_time" property="createTime"/>
+        <result column="approver_name" property="approverName"/>
+    </resultMap>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO tb_approval (work_hour_id, approver_id, status, comment, approve_time)
+        VALUES (#{workHourId}, #{approverId}, #{status}, #{comment}, #{approveTime})
+    </insert>
+
+    <select id="findHistoryByApprover" resultMap="approvalMap">
+        SELECT a.*, u.name AS approver_name
+        FROM tb_approval a
+        LEFT JOIN tb_user u ON a.approver_id = u.id
+        WHERE a.approver_id = #{approverId}
+        ORDER BY a.approve_time DESC, a.create_time DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countHistoryByApprover" resultType="long">
+        SELECT COUNT(*)
+        FROM tb_approval
+        WHERE approver_id = #{approverId}
+    </select>
+
+</mapper>

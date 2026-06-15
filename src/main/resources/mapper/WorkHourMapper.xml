@@ -114,4 +114,158 @@
         UPDATE tb_work_hour SET is_deleted = 1 WHERE id = #{id}
     </update>
 
+    <update id="updateStatus">
+        UPDATE tb_work_hour SET status = #{status} WHERE id = #{id}
+    </update>
+
+    <!-- ====== 审批查询 ====== -->
+
+    <select id="findPendingByPm" resultType="java.util.LinkedHashMap">
+        SELECT wh.id AS id,
+               wh.id AS workHourId,
+               wh.user_id AS userId,
+               u.name AS userName,
+               p.name AS projectName,
+               m.name AS moduleName,
+               wh.work_date AS workDate,
+               wh.hours AS hours,
+               wh.content AS content,
+               wh.create_time AS createTime
+        FROM tb_work_hour wh
+        LEFT JOIN tb_user u ON wh.user_id = u.id
+        LEFT JOIN tb_project p ON wh.project_id = p.id
+        LEFT JOIN tb_task_module m ON wh.module_id = m.id
+        WHERE wh.is_deleted = 0
+          AND wh.status = 'PENDING'
+          AND u.role = 'PM'
+        ORDER BY wh.create_time DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countPendingByPm" resultType="long">
+        SELECT COUNT(*)
+        FROM tb_work_hour wh
+        LEFT JOIN tb_user u ON wh.user_id = u.id
+        WHERE wh.is_deleted = 0
+          AND wh.status = 'PENDING'
+          AND u.role = 'PM'
+    </select>
+
+    <select id="findPendingByProjectManager" resultType="java.util.LinkedHashMap">
+        SELECT wh.id AS id,
+               wh.id AS workHourId,
+               wh.user_id AS userId,
+               u.name AS userName,
+               p.name AS projectName,
+               m.name AS moduleName,
+               wh.work_date AS workDate,
+               wh.hours AS hours,
+               wh.content AS content,
+               wh.create_time AS createTime
+        FROM tb_work_hour wh
+        LEFT JOIN tb_user u ON wh.user_id = u.id
+        LEFT JOIN tb_project p ON wh.project_id = p.id
+        LEFT JOIN tb_task_module m ON wh.module_id = m.id
+        WHERE wh.is_deleted = 0
+          AND wh.status = 'PENDING'
+          AND p.manager_id = #{managerId}
+          AND (u.role IS NULL OR u.role != 'PM')
+        ORDER BY wh.create_time DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countPendingByProjectManager" resultType="long">
+        SELECT COUNT(*)
+        FROM tb_work_hour wh
+        LEFT JOIN tb_project p ON wh.project_id = p.id
+        LEFT JOIN tb_user u ON wh.user_id = u.id
+        WHERE wh.is_deleted = 0
+          AND wh.status = 'PENDING'
+          AND p.manager_id = #{managerId}
+          AND (u.role IS NULL OR u.role != 'PM')
+    </select>
+
+    <!-- ====== 大屏 ====== -->
+
+    <select id="dashboardToday" resultType="java.util.LinkedHashMap">
+        SELECT COUNT(DISTINCT wh.user_id) AS submitCount,
+               COALESCE(SUM(wh.hours), 0) AS totalHours
+        FROM tb_work_hour wh
+        WHERE wh.is_deleted = 0
+          AND wh.work_date = CURDATE()
+        <if test="!isAdmin and !isDeptManager and isPm">
+            AND wh.project_id IN (SELECT id FROM tb_project WHERE manager_id = #{userId})
+        </if>
+        <if test="!isAdmin and !isDeptManager and !isPm">
+            AND wh.user_id = #{userId}
+        </if>
+    </select>
+
+    <select id="dashboardPendingCount" resultType="long">
+        <if test="role == 'PM'">
+            SELECT COUNT(*)
+            FROM tb_work_hour wh
+            LEFT JOIN tb_project p ON wh.project_id = p.id
+            LEFT JOIN tb_user u ON wh.user_id = u.id
+            WHERE wh.is_deleted = 0
+              AND wh.status = 'PENDING'
+              AND p.manager_id = #{userId}
+              AND (u.role IS NULL OR u.role != 'PM')
+        </if>
+        <if test="role == 'DEPT_MANAGER'">
+            SELECT COUNT(*)
+            FROM tb_work_hour wh
+            LEFT JOIN tb_user u ON wh.user_id = u.id
+            WHERE wh.is_deleted = 0
+              AND wh.status = 'PENDING'
+              AND u.role = 'PM'
+        </if>
+        <if test="role != 'PM' and role != 'DEPT_MANAGER'">
+            SELECT 0
+        </if>
+    </select>
+
+    <select id="dashboardMonthlyRate" resultType="java.util.LinkedHashMap">
+        SELECT COALESCE(SUM(wh.hours), 0) AS totalHours
+        FROM tb_work_hour wh
+        WHERE wh.is_deleted = 0
+          AND wh.work_date &gt;= #{monthStart}
+          AND wh.work_date &lt;= #{monthEnd}
+        <if test="!isAdmin and !isDeptManager and isPm">
+            AND wh.project_id IN (SELECT id FROM tb_project WHERE manager_id = #{userId})
+        </if>
+        <if test="!isAdmin and !isDeptManager and !isPm">
+            AND wh.user_id = #{userId}
+        </if>
+    </select>
+
+    <select id="dashboardProjectDistribution" resultType="java.util.LinkedHashMap">
+        SELECT p.name AS projectName, COALESCE(SUM(wh.hours), 0) AS hours
+        FROM tb_work_hour wh
+        LEFT JOIN tb_project p ON wh.project_id = p.id
+        WHERE wh.is_deleted = 0
+          AND p.is_deleted = 0
+        <if test="!isAdmin and !isDeptManager and isPm">
+            AND wh.project_id IN (SELECT id FROM tb_project WHERE manager_id = #{userId})
+        </if>
+        <if test="!isAdmin and !isDeptManager and !isPm">
+            AND wh.user_id = #{userId}
+        </if>
+        GROUP BY wh.project_id, p.name
+        ORDER BY hours DESC
+    </select>
+
+    <select id="dashboardOverview" resultType="java.util.LinkedHashMap">
+        SELECT
+            COALESCE(SUM(wh.hours), 0) AS totalHours
+        FROM tb_work_hour wh
+        WHERE wh.is_deleted = 0
+        <if test="!isAdmin and !isDeptManager and isPm">
+            AND wh.project_id IN (SELECT id FROM tb_project WHERE manager_id = #{userId})
+        </if>
+        <if test="!isAdmin and !isDeptManager and !isPm">
+            AND wh.user_id = #{userId}
+        </if>
+    </select>
+
 </mapper>

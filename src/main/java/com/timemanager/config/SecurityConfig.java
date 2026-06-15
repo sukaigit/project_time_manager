@@ -32,6 +32,10 @@ public class SecurityConfig {
                 .requestMatchers("/api/projects/**").hasAnyRole("ADMIN", "PM")
                 .requestMatchers("/api/modules/**").hasAnyRole("ADMIN", "PM")
                 .requestMatchers("/api/work-hours/**").hasAnyRole("ADMIN", "PM", "USER")
+                .requestMatchers("/api/approvals/pending").hasAnyRole("PM", "DEPT_MANAGER")
+                .requestMatchers("/api/approvals/batch").hasAnyRole("PM", "DEPT_MANAGER")
+                .requestMatchers("/api/approvals/history").hasAnyRole("PM", "DEPT_MANAGER")
+                .requestMatchers("/api/dashboard/**").authenticated()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
