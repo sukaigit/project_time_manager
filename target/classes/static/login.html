@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - 工时管理系统</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="login-page">
+    <div class="login-container">
+        <div class="login-card">
+            <h1 class="login-title">工时管理系统</h1>
+            <p class="login-subtitle">研发与交付中心</p>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label class="form-label">用户名</label>
+                    <input type="text" class="form-input" name="username" placeholder="请输入用户名" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">密码</label>
+                    <input type="password" class="form-input" name="password" placeholder="请输入密码" required>
+                </div>
+                <div class="form-group captcha-group">
+                    <label class="form-label">验证码</label>
+                    <div style="display:flex;gap:8px">
+                        <input type="text" class="form-input" name="captchaCode" placeholder="验证码" maxlength="4" required style="flex:1">
+                        <img id="captchaImg" src="" onclick="refreshCaptcha()" style="cursor:pointer;border-radius:6px;height:40px;width:130px;background:#f0f0f0" alt="点击刷新验证码">
+                    </div>
+                    <input type="hidden" name="captchaId" id="captchaId">
+                </div>
+                <button type="submit" class="btn btn-primary btn-login">登 录</button>
+            </form>
+            <p id="loginError" class="alert alert-error" style="display:none"></p>
+        </div>
+    </div>
+    <script src="js/api.js"></script>
+    <script>
+        let captchaId = '';
+
+        // 刷新验证码：通过 fetch 获取图片 blob + 响应头 X-Captcha-Id
+        async function refreshCaptcha() {
+            try {
+                const res = await API.request('/api/auth/captcha?' + Date.now(), { method: 'GET', rawResponse: true });
+                captchaId = res.headers.get('X-Captcha-Id') || '';
+                document.getElementById('captchaId').value = captchaId;
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const img = document.getElementById('captchaImg');
+                // 释放旧 URL
+                if (img.dataset.blobUrl) URL.revokeObjectURL(img.dataset.blobUrl);
+                img.src = url;
+                img.dataset.blobUrl = url;
+            } catch (e) {
+                console.error('获取验证码失败', e);
+            }
+        }
+
+        // 初始化加载验证码
+        refreshCaptcha();
+
+        document.getElementById('loginForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const fd = new FormData(e.target);
+            const formData = Object.fromEntries(fd);
+
+            // 确保 captchaId 已填充
+            if (!formData.captchaId) formData.captchaId = captchaId;
+
+            const data = await API.post('/api/auth/login', formData);
+            if (data.code === 200) {
+                localStorage.setItem('token', data.data.token);
+                localStorage.setItem('userName', data.data.name);
+                localStorage.setItem('role', data.data.role);
+                window.location.href = '/';
+            } else {
+                document.getElementById('loginError').textContent = data.message;
+                document.getElementById('loginError').style.display = 'block';
+                refreshCaptcha();
+            }
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,131 @@
+/* style.css - 工时管理系统全局样式 */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+@import url('../design.css');
+
+/* === 登录页 === */
+.login-page {
+    background: var(--color-canvas-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+}
+.login-container { width: 380px; }
+.login-card {
+    background: var(--color-canvas);
+    border-radius: var(--rounded-lg);
+    padding: var(--spacing-xxl);
+    box-shadow: var(--shadow-card);
+    border: 1px solid var(--color-hairline);
+}
+.login-title {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--color-ink);
+    text-align: center;
+    margin-bottom: 4px;
+}
+.login-subtitle {
+    font-size: 13px;
+    color: var(--color-ink-mute);
+    text-align: center;
+    margin-bottom: var(--spacing-xl);
+}
+.btn-login {
+    width: 100%;
+    margin-top: var(--spacing-lg);
+    padding: 10px 16px;
+    font-size: 15px;
+}
+.form-group {
+    margin-bottom: var(--spacing-md);
+}
+
+/* === 管理后台布局 === */
+.app-layout {
+    display: flex;
+    min-height: 100vh;
+}
+.sidebar {
+    width: 220px;
+    background: var(--color-ink);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+}
+.sidebar-header {
+    padding: var(--spacing-lg);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.sidebar-header h2 {
+    font-size: 16px;
+    font-weight: 500;
+    margin: 0;
+}
+.sidebar-nav {
+    flex: 1;
+    padding: var(--spacing-sm) 0;
+    overflow-y: auto;
+}
+.sidebar-nav a {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: 10px var(--spacing-lg);
+    color: rgba(255,255,255,0.7);
+    text-decoration: none;
+    font-size: 14px;
+    transition: background 0.15s;
+    cursor: pointer;
+}
+.sidebar-nav a:hover {
+    background: rgba(255,255,255,0.1);
+    color: white;
+}
+.sidebar-nav a.active {
+    background: var(--color-primary);
+    color: white;
+}
+
+/* === 主内容区 === */
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+.topbar {
+    background: var(--color-canvas);
+    border-bottom: 1px solid var(--color-hairline);
+    padding: 0 var(--spacing-xl);
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+}
+.topbar-title {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--color-ink);
+}
+.topbar-right {
+    font-size: 14px;
+    color: var(--color-ink-mute);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+.topbar-right a {
+    color: var(--color-ink-mute);
+    text-decoration: none;
+}
+.topbar-right a:hover {
+    color: var(--color-primary);
+}
+.page-content {
+    padding: var(--spacing-xl);
+    flex: 1;
+    overflow-y: auto;
+}
