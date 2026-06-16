@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.timemanager.mapper.TaskModuleMapper">
+
+    <resultMap id="moduleMap" type="TaskModule">
+        <id column="id" property="id"/>
+        <result column="project_id" property="projectId"/>
+        <result column="name" property="name"/>
+        <result column="description" property="description"/>
+        <result column="estimated_hours" property="estimatedHours"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="used_hours" property="usedHours"/>
+    </resultMap>
+
+    <sql id="baseColumns">
+        id, project_id, name, description, estimated_hours, create_time, update_time, is_deleted
+    </sql>
+
+    <select id="findById" resultMap="moduleMap">
+        SELECT <include refid="baseColumns"/>,
+            (SELECT COALESCE(SUM(hours), 0) FROM tb_work_hour WHERE module_id = tm.id AND is_deleted = 0) AS used_hours
+        FROM tb_task_module tm
+        WHERE tm.id = #{id} AND tm.is_deleted = 0
+    </select>
+
+    <select id="findByProjectId" resultMap="moduleMap">
+        SELECT <include refid="baseColumns"/>,
+            (SELECT COALESCE(SUM(hours), 0) FROM tb_work_hour WHERE module_id = tm.id AND is_deleted = 0) AS used_hours
+        FROM tb_task_module tm
+        WHERE tm.project_id = #{projectId} AND tm.is_deleted = 0
+        ORDER BY tm.create_time ASC
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO tb_task_module (project_id, name, description, estimated_hours)
+        VALUES (#{projectId}, #{name}, #{description}, #{estimatedHours})
+    </insert>
+
+    <update id="update">
+        UPDATE tb_task_module
+        <set>
+            <if test="name != null">name = #{name},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="estimatedHours != null">estimated_hours = #{estimatedHours},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <update id="delete">
+        UPDATE tb_task_module SET is_deleted = 1 WHERE id = #{id}
+    </update>
+
+</mapper>

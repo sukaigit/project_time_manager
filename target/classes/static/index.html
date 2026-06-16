@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工时管理系统</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="app-layout">
+    <aside class="sidebar">
+        <div class="sidebar-header"><h2>工时管理</h2></div>
+        <nav class="sidebar-nav" id="sidebarNav"></nav>
+    </aside>
+    <main class="main-content">
+        <header class="topbar">
+            <span class="topbar-title" id="pageTitle">首页大屏</span>
+            <div class="topbar-right">
+                <span id="userName"></span>
+                <span>|</span>
+                <a href="#" onclick="logout()">退出</a>
+            </div>
+        </header>
+        <div class="page-content" id="pageContent"></div>
+    </main>
+</div>
+<script src="js/api.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

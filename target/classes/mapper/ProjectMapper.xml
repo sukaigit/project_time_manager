@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.timemanager.mapper.ProjectMapper">
+
+    <resultMap id="projectMap" type="Project">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="description" property="description"/>
+        <result column="manager_id" property="managerId"/>
+        <result column="start_date" property="startDate"/>
+        <result column="end_date" property="endDate"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="manager_name" property="managerName"/>
+    </resultMap>
+
+    <sql id="baseColumns">
+        p.id, p.name, p.description, p.manager_id, p.start_date, p.end_date,
+        p.status, p.create_time, p.update_time, p.is_deleted
+    </sql>
+
+    <select id="findById" resultMap="projectMap">
+        SELECT <include refid="baseColumns"/>, u.name AS manager_name
+        FROM tb_project p
+        LEFT JOIN tb_user u ON p.manager_id = u.id
+        WHERE p.id = #{id} AND p.is_deleted = 0
+    </select>
+
+    <select id="findByPage" resultMap="projectMap">
+        SELECT <include refid="baseColumns"/>, u.name AS manager_name
+        FROM tb_project p
+        LEFT JOIN tb_user u ON p.manager_id = u.id
+        WHERE p.is_deleted = 0
+        <if test="keyword != null and keyword != ''">
+            AND (p.name LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        ORDER BY p.create_time DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countByKeyword" resultType="long">
+        SELECT COUNT(*)
+        FROM tb_project
+        WHERE is_deleted = 0
+        <if test="keyword != null and keyword != ''">
+            AND (name LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO tb_project (name, description, manager_id, start_date, end_date, status)
+        VALUES (#{name}, #{description}, #{managerId}, #{startDate}, #{endDate}, #{status})
+    </insert>
+
+    <update id="update">
+        UPDATE tb_project
+        <set>
+            <if test="name != null">name = #{name},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="managerId != null">manager_id = #{managerId},</if>
+            <if test="startDate != null">start_date = #{startDate},</if>
+            <if test="endDate != null">end_date = #{endDate},</if>
+            <if test="status != null">status = #{status},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <update id="delete">
+        UPDATE tb_project SET is_deleted = 1 WHERE id = #{id}
+    </update>
+
+</mapper>
