@@ -56,8 +56,23 @@ jobs:
       - name: Compile
         run: mvn compile -q
 
-      - name: Run tests and coverage check
+      - name: Run tests
         run: mvn test
+
+      - name: Package
+        run: mvn package -DskipTests -q
+
+      - name: Run semgrep scan
+        continue-on-error: true
+        run: |
+          pip install semgrep -q
+          semgrep --config=auto --error .
+
+      - name: Run gitleaks scan
+        continue-on-error: true
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run entropy cleanup
         run: bash scripts/entropy-cleanup.sh
